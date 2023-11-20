@@ -1,0 +1,48 @@
+# Библиотеки
+import random
+import sys
+
+class DNACompressor:
+    # Словарь для сопоставления нуклеотидов и их бинарных представлений
+    _nucleotide_to_bits = {'A': 0b00, 'C': 0b01, 'G': 0b10, 'T': 0b11}
+
+    def __init__(self, sequence):
+        self.original_sequence = sequence
+        self._compressed_sequence = self._compress_sequence()
+
+    def _compress_sequence(self):
+        compressed = 0
+        for nucleotide in self.original_sequence:
+            compressed <<= 2  # Сдвигаем на два бита влево
+            compressed |= self._nucleotide_to_bits[nucleotide]
+        return compressed
+
+    def decompress(self):
+        decompressed_sequence = ""
+        compressed = self._compressed_sequence
+        for i in range(len(self.original_sequence)):
+            bits = compressed & 0b11  # Получаем последние 2 бита
+            nucleotide = [nt for nt, b in self._nucleotide_to_bits.items() if b == bits][0]
+            decompressed_sequence += nucleotide
+            compressed >>= 2  # Сдвигаем на два бита вправо
+        return decompressed_sequence[::-1]  # Переворачиваем строку, т.к. считываем днк с конца
+
+    def __str__(self):
+        return self.decompress()
+
+# Функция генерации случайной последовательности ДНК
+def generate_random_dna_sequence(length):
+    return ''.join(random.choice('ACGT') for _ in range(length))
+
+# Основа программы
+lengths = [1000, 10_000, 100_000, 1_000_000, 10_000_000]
+for length in lengths:
+    sequence = generate_random_dna_sequence(length)
+    compressor = DNACompressor(sequence)
+    original_size = sys.getsizeof(sequence)
+    compressed_size = sys.getsizeof(compressor._compressed_sequence)
+    print(f"Length: {length}")
+    print(f"Original size: {original_size} bytes")
+    print(f"Compressed size: {compressed_size} bytes")
+    print("Compression check:", sequence == str(compressor))
+    print("-" * 50)
